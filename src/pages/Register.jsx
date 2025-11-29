@@ -1,23 +1,41 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Auth.css'
 
 function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn')
+    if (isLoggedIn) {
+      navigate('/home')
+    }
+  }, [])
 
   const handleRegister = (e) => {
     e.preventDefault()
-    if (password !== confirm) {
-      setError('Passwords do not match')
+
+    // Fetch existing users from localStorage
+    const existingUsers = JSON.parse(localStorage.getItem('users')) || []
+
+    // Check if email already exists
+    const userExists = existingUsers.some((user) => user.email === email)
+
+    if (userExists) {
+      alert('⚠️ This email is already registered! Please log in instead.')
+      navigate('/login')
       return
     }
 
+    // Add new user
     const newUser = { email, password }
-    localStorage.setItem('user', JSON.stringify(newUser))
+    const updatedUsers = [...existingUsers, newUser]
+
+    // Save updated user list to localStorage
+    localStorage.setItem('users', JSON.stringify(updatedUsers))
+    alert('✅ Registration Successful! Please login now.')
     navigate('/login')
   }
 
@@ -25,15 +43,27 @@ function Register() {
     <div className="auth-container">
       <h2>Register</h2>
       <form onSubmit={handleRegister}>
-        <input type="email" placeholder="Email" value={email}
-          onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password}
-          onChange={(e) => setPassword(e.target.value)} required />
-        <input type="password" placeholder="Confirm Password" value={confirm}
-          onChange={(e) => setConfirm(e.target.value)} required />
-        {error && <p className="error">{error}</p>}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Register</button>
-        <p>Already registered? <span onClick={() => navigate('/login')}>Login</span></p>
+        <p>
+          Already have an account?{' '}
+          <span onClick={() => navigate('/login')} className="link">
+            Login
+          </span>
+        </p>
       </form>
     </div>
   )
